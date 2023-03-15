@@ -1,7 +1,9 @@
+
+const log = require('./logger.js');  // .js is optional
+
 function sayHello(name) {
-  console.log('Hello ' + name);
+  return 'Hello ' + name;
 }
 
-// sayHello('Rob');
-console.log(window);
+log(sayHello('Rob'));
 
