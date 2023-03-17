@@ -1,0 +1,22 @@
+{
+  "name": "nodeprac",
+  "version": "1.0.0",
+  "description": "Practicing with Node, Express, and MongoDB",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robertgodfrey/nodeprac.git"
+  },
+  "author": "Rob Godfrey",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/robertgodfrey/nodeprac/issues"
+  },
+  "homepage": "https://github.com/robertgodfrey/nodeprac#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
