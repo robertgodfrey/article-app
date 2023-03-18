@@ -33,17 +33,27 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // home route
 app.get('/', async (req, res) => {
-  let articles = {};
   try {
-    articles = await Article.find();
+    res.render('index', {
+      title: 'Test',
+      articles: await Article.find()
+    });
   } catch (err) {
     console.log(err);
   }
-  res.render('index', {
-    title: 'Test',
-    articles: articles
-  });
 });
+
+// article route
+app.get('/article/:id', async (req, res) => {
+  try {
+    res.render('article', {
+      article: await Article.findById(req.params.id)
+    });
+    return;
+  } catch (err) {
+    console.log(err);
+  }
+})
 
 // add articles route
 app.get('/articles/add', (req, res) => {
