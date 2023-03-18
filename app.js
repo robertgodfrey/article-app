@@ -2,35 +2,34 @@
 
 const express = require('express');
 const path = require('path');
+const mongoose = require('mongoose');
+
+mongoose.connect('mongodb://localhost/nodekb');
+let db = mongoose.connection;
+
+// check connection
+db.once('open', () => console.log('Connected to MongoDB'));
+
+// check for db errors
+db.on('error', (err) => console.log(err));
 
 // init app
 const app = express();
+
+// bring in models
+let Article = require('./models/article')
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 
 // home route
-app.get('/', (req, res) => {
-  let articles = [
-    {
-      id: 1,
-      title: 'Article One',
-      author: 'Rob Godfrey',
-      body: 'This is article one.'
-    },
-    {
-      id: 2,
-      title: 'Article Two',
-      author: 'John Doe',
-      body: 'This is article two.'
-    },
-    {
-      id: 1,
-      title: 'Article One',
-      author: 'Rob Godfrey',
-      body: 'This is article three.'
-    }
-  ];
+app.get('/', async (req, res) => {
+  let articles = {};
+  try {
+    articles = await Article.find();
+  } catch (err) {
+    console.log(err);
+  }
   res.render('index', {
     title: 'Test',
     articles: articles
