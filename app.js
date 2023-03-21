@@ -53,7 +53,7 @@ app.get('/article/:id', async (req, res) => {
   } catch (err) {
     console.log(err);
   }
-})
+});
 
 // add articles route
 app.get('/articles/add', (req, res) => {
@@ -62,9 +62,20 @@ app.get('/articles/add', (req, res) => {
   });
 });
 
+// edit article route
+app.get('/article/edit/:id', async (req, res) => {
+  try {
+    res.render('edit_article', {
+      article: await Article.findById(req.params.id)
+    });
+    return;
+  } catch (err) {
+    console.log(err);
+  }
+})
+
 // submit article post route
 app.post('/articles/add', async (req, res) => {
-  console.log('Article submitted.');
   let article = new Article();
   article.title = req.body.title;
   article.author = req.body.author;
@@ -72,13 +83,46 @@ app.post('/articles/add', async (req, res) => {
 
   try {
     article.save();
+    console.log('Article submitted.');
   } catch (err) {
     console.log(err);
     return;
   }
 
   res.redirect('/');
-})
+});
+
+// update article post route
+app.post('/articles/edit/:id', async (req, res) => {
+  let query = { _id: req.params.id };
+  let article = {};
+  article.title = req.body.title;
+  article.author = req.body.author;
+  article.body = req.body.body;
+
+  try {
+    await Article.updateOne(query, article);
+    console.log('Article updated.');
+  } catch (err) {
+    console.log(err);
+    return;
+  }
+
+  res.redirect('/');
+});
+
+// delete route
+app.delete('/article/:id', async (req, res) => {
+  let query = { _id: req.params.id };
+  try {
+    await Article.deleteOne(query);
+    console.log('Article deleted.');
+    res.send('Success');
+  } catch (err) {
+    console.log(err);
+    return;
+  }
+});
 
 // start server
 app.listen(3000, () => {
