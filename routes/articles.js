@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Article = require('../models/article');
+const User = require('../models/user');
 const { check, validationResult } = require('express-validator');
 
 // add articles route
@@ -25,7 +26,6 @@ router.get('/edit/:id', async (req, res) => {
 // submit article post route
 router.post('/add', [
   check('title', 'Title is required').notEmpty(),
-  check('author', 'Author is required').notEmpty(),
   check('body', 'Body is required').notEmpty()
 ], async (req, res) => {
 
@@ -40,7 +40,7 @@ router.post('/add', [
   } else {
     let article = new Article();
     article.title = req.body.title;
-    article.author = req.body.author;
+    article.author = req.user._id;
     article.body = req.body.body;
 
     try {
@@ -60,7 +60,7 @@ router.post('/edit/:id', async (req, res) => {
   let query = { _id: req.params.id };
   let article = {};
   article.title = req.body.title;
-  article.author = req.body.author;
+  article.author = req.user._id;
   article.body = req.body.body;
 
   try {
@@ -91,14 +91,22 @@ router.delete('/:id', async (req, res) => {
 
 // article route
 router.get('/:id', async (req, res) => {
-  try {
-    res.render('article', {
-      article: await Article.findById(req.params.id)
-    });
-    return;
-  } catch (err) {
-    console.log(err);
-  }
+  Article.findById(req.params.id)
+      .then((article, err) => {
+        User.findById(article.author)
+            .then((user, err) => {
+              res.render('article', {
+                article: article,
+                author: user.name
+              })
+            })
+            .catch(err => {
+              console.log(err);
+            })
+      })
+      .catch(err => {
+        console.log(err);
+      });
 });
 
 module.exports = router;
