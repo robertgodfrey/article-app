@@ -7,8 +7,10 @@ const bodyParser = require('body-parser');
 const { check, validationResult } = require('express-validator');
 const flash = require('connect-flash');
 const session = require('express-session');
+const passport = require('passport');
+const config = require('./config/database');
 
-mongoose.connect('mongodb://localhost/nodekb');
+mongoose.connect(config.database);
 let db = mongoose.connection;
 
 // check connection
@@ -46,6 +48,16 @@ app.use(session({
 app.use(require('connect-flash')());
 app.use((req, res, next) => {
   res.locals.messages = require('express-messages')(req, res);
+  next();
+});
+
+// passport config
+require('./config/passport')(passport);
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.get('*', (req, res, next) => {
+  res.locals.user = req.user || null;
   next();
 });
 
