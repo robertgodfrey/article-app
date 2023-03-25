@@ -4,6 +4,9 @@ const express = require('express');
 const path = require('path');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+const { check, validationResult } = require('express-validator');
+const flash = require('connect-flash');
+const session = require('express-session');
 
 mongoose.connect('mongodb://localhost/nodekb');
 let db = mongoose.connection;
@@ -18,7 +21,7 @@ db.on('error', (err) => console.log(err));
 const app = express();
 
 // bring in models
-let Article = require('./models/article')
+let Article = require('./models/article');
 
 // load view engine
 app.set('views', path.join(__dirname, 'views'));
@@ -30,6 +33,21 @@ app.use(bodyParser.json());
 
 // set public folder
 app.use(express.static(path.join(__dirname, 'public')));
+
+// express session
+app.use(session({
+  secret: 'hehe',
+  resave: false,
+  saveUninitialized: true,
+  cooke: { secure: true }
+}));
+
+// express messages
+app.use(require('connect-flash')());
+app.use((req, res, next) => {
+  res.locals.messages = require('express-messages')(req, res);
+  next();
+});
 
 // home route
 app.get('/', async (req, res) => {
@@ -72,24 +90,41 @@ app.get('/article/edit/:id', async (req, res) => {
   } catch (err) {
     console.log(err);
   }
-})
+});
 
 // submit article post route
-app.post('/articles/add', async (req, res) => {
-  let article = new Article();
-  article.title = req.body.title;
-  article.author = req.body.author;
-  article.body = req.body.body;
+app.post('/articles/add', [
+    check('title', 'Title is required').isLength({ min: 1 }),
+    check('author', 'Author is required').isLength({ min: 1 }),
+    check('body', 'Body is required').isLength({ min: 1 })
+  ], async (req, res) => {
 
-  try {
-    article.save();
-    console.log('Article submitted.');
-  } catch (err) {
-    console.log(err);
-    return;
+  // get errors
+  let errors = validationResult(req);
+
+  console.log(errors)
+  if (!errors.isEmpty()) {
+    res.render('add_article', {
+      title: 'Add Article',
+      errors: errors
+    });
+  } else {
+    console.log('ayyyy')
+    let article = new Article();
+    article.title = req.body.title;
+    article.author = req.body.author;
+    article.body = req.body.body;
+
+    try {
+      article.save();
+      console.log('Article submitted.');
+      req.flash('success', 'Article Added');
+      res.redirect('/');
+    } catch (err) {
+      console.log(err);
+      return;
+    }
   }
-
-  res.redirect('/');
 });
 
 // update article post route
@@ -103,12 +138,14 @@ app.post('/articles/edit/:id', async (req, res) => {
   try {
     await Article.updateOne(query, article);
     console.log('Article updated.');
+    req.flash('success', 'Article Updated');
+    res.redirect('/');
   } catch (err) {
     console.log(err);
     return;
   }
 
-  res.redirect('/');
+
 });
 
 // delete route
