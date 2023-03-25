@@ -1,7 +1,7 @@
 const express = require('express');
+const router = express.Router();
 const Article = require('../models/article');
 const { check, validationResult } = require('express-validator');
-const router = express.Router();
 
 // add articles route
 router.get('/add', (req, res) => {
@@ -24,15 +24,14 @@ router.get('/edit/:id', async (req, res) => {
 
 // submit article post route
 router.post('/add', [
-  check('title', 'Title is required').isLength({ min: 1 }),
-  check('author', 'Author is required').isLength({ min: 1 }),
-  check('body', 'Body is required').isLength({ min: 1 })
+  check('title', 'Title is required').notEmpty(),
+  check('author', 'Author is required').notEmpty(),
+  check('body', 'Body is required').notEmpty()
 ], async (req, res) => {
 
   // get errors
   let errors = validationResult(req);
 
-  console.log(errors)
   if (!errors.isEmpty()) {
     res.render('add_article', {
       title: 'Add Article',
