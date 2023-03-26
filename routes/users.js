@@ -37,8 +37,8 @@ router.post('/register', [
     const cPassword = req.body.cpassword;
 
     if (password != cPassword) {
-      // TODO
-      console.log('Passwords don\'t match!');
+      req.flash('error', 'Passwords don\'t match');
+      res.render('register');
     } else {
       let newUser = new User({
         name: name,
@@ -92,7 +92,6 @@ router.get('/logout', (req, res) => {
       res.redirect('/');
     }
   });
-
 });
 
 module.exports = router;

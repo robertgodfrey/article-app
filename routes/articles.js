@@ -5,26 +5,32 @@ const User = require('../models/user');
 const { check, validationResult } = require('express-validator');
 
 // add articles route
-router.get('/add', (req, res) => {
+router.get('/add', ensureAuthenticated, (req, res) => {
   res.render('add_article', {
     title: 'Add Article'
   });
 });
 
 // edit article route
-router.get('/edit/:id', async (req, res) => {
-  try {
-    res.render('edit_article', {
-      article: await Article.findById(req.params.id)
-    });
-    return;
-  } catch (err) {
-    console.log(err);
-  }
+router.get('/edit/:id', ensureAuthenticated, (req, res) => {
+  Article.findById(req.params.id)
+      .then((article, err) => {
+        if (article.author != req.user._id) {
+          req.flash('danger', 'Not authorized');
+          res.redirect('/');
+        } else {
+          res.render('edit_article', {
+            article: article
+          });
+        }
+      })
+      .catch( err => {
+        console.log(err);
+      });
 });
 
 // submit article post route
-router.post('/add', [
+router.post('/add', ensureAuthenticated, [
   check('title', 'Title is required').notEmpty(),
   check('body', 'Body is required').notEmpty()
 ], async (req, res) => {
@@ -56,7 +62,7 @@ router.post('/add', [
 });
 
 // update article post route
-router.post('/edit/:id', async (req, res) => {
+router.post('/edit/:id', ensureAuthenticated, async (req, res) => {
   let query = { _id: req.params.id };
   let article = {};
   article.title = req.body.title;
@@ -77,16 +83,25 @@ router.post('/edit/:id', async (req, res) => {
 });
 
 // delete route
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', ensureAuthenticated, (req, res) => {
   let query = { _id: req.params.id };
-  try {
-    await Article.deleteOne(query);
-    console.log('Article deleted.');
-    res.send('Success');
-  } catch (err) {
-    console.log(err);
-    return;
-  }
+
+  Article.findById(req.params.id)
+      .then((article, err) => {
+        if (article.author != req.user._id) {
+          res.status(500).send();
+        } else {
+          Article.deleteOne(query)
+              .then(err => {
+                console.log('Article deleted.');
+                res.send('Success');
+              })
+            .catch (err => {
+              console.log(err);
+              return;
+            });
+        }
+      });
 });
 
 // article route
@@ -108,5 +123,15 @@ router.get('/:id', async (req, res) => {
         console.log(err);
       });
 });
+
+// access control
+function ensureAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next();
+  } else {
+    req.flash('danger', 'Please log in to continue');
+    res.redirect('/users/login');
+  }
+}
 
 module.exports = router;
